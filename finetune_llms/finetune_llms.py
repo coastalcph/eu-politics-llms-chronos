@@ -10,6 +10,7 @@ from data import DATA_DIR
 import logging, datasets
 import sys
 from audit_llms.helpers import clean_text_qa_instruct
+from trl import DataCollatorForCompletionOnlyLM
 
 
 logger = logging.getLogger(__name__)
@@ -39,12 +40,12 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Required arguments
-    parser.add_argument('--model_name', default='meta-llama/Llama-2-13b-chat-hf', help='Model name in HF Hub')
+    parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', help='Model name in HF Hub')
     parser.add_argument('--dataset_name', default='coastalcph/eu_debates', help='Dataset name')
-    parser.add_argument('--party_names', default=None, help='List of party names to consider when filtering')
+    parser.add_argument('--party_names', default='S&D', help='List of party names to consider when filtering')
     parser.add_argument('--speaker_role', default=None, help='List of speaker roles to consider when filtering')
     parser.add_argument('--years', default=None, help='Year to consider when filtering')
-    parser.add_argument('--date_range', default=None, help='Date range to consider when filtering')
+    parser.add_argument('--date_range', default=('2009-07-14', '2014-04-17'), type=tuple, help='Date range to consider when filtering')
     parser.add_argument('--min_length', default=100, help='Minimum length of the text to consider when filtering')
     parser.add_argument('--epochs', default=10, type=int, help='Number of epochs to train')
     parser.add_argument('--per_device_train_batch_size', default=4, type=int)
@@ -52,8 +53,9 @@ def main():
     parser.add_argument('--lr', default=2e-4, type=float)
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--auth_token', default=None)
-    parser.add_argument('--output_extension', default='ppe-all', help='Output extension for output directory')
-    parser.add_argument('--pseudo_qa', default=None, help='Whether to turn the text into a pseudo question')
+    parser.add_argument('--output_extension', default='sd-2014', help='Output extension for output directory')
+    parser.add_argument('--pseudo_qa', default=True, type=bool, help='Whether to turn the text into a pseudo question')
+    parser.add_argument('--debug', default=True, type=bool, help='Whether to infer summaries')
     param_config = parser.parse_args()
 
     # Setup logging
@@ -69,6 +71,12 @@ def main():
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()
 
+    if param_config.debug:
+        print('Debugging mode activated')
+        param_config.model_name = 'gpt2'
+        param_config.quant = False
+        param_config.max_length = 8
+
     # Fix parties' list
     param_config.party_names = param_config.party_names.split(',') if param_config.party_names is not None else None
 
@@ -78,23 +86,28 @@ def main():
         print(f'{arg}: {getattr(param_config, arg)}')
 
     # Compute free memory for each GPU
-    free_in_GB = int(torch.cuda.mem_get_info()[0] / 1024**3)
-    max_memory = f"{free_in_GB-2}GB"
-    n_gpus = torch.cuda.device_count()
-    max_memory = {i: max_memory for i in range(n_gpus)}
+    if torch.cuda.is_available():
+        free_in_GB = int(torch.cuda.mem_get_info()[0] / 1024 ** 3)
+        max_memory = f"{free_in_GB - 2}GB"
+        n_gpus = torch.cuda.device_count()
+        max_memory = {i: max_memory for i in range(n_gpus)}
+    else:
+        max_memory = None
 
     # Load tokenizer and model
     model = AutoModelForCausalLM.from_pretrained(
         param_config.model_name,
         max_memory=max_memory,
+        device_map='auto' if torch.cuda.is_available() else 'cpu',
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=True,
             use_flash_attention=True,
             bnb_4bit_compute_dtype=torch.float16,
             bnb_4bit_use_double_quant=False,
             bnb_4bit_quant_type="nf4",
-        ),
-        torch_dtype=torch.float16,
+        ) if param_config.debug is False else None,
+        torch_dtype=torch.float16 if torch.cuda.is_available() else None,
+        attn_implementation="flash_attention_2" if not param_config.debug else None,
     )
 
     model.config.use_cache = False
@@ -162,6 +175,11 @@ def main():
         print('Turning the text into a pseudo question')
         # Turn text into a pseudo question
         dataset = dataset.map(clean_text_qa_instruct, load_from_cache_file=False)
+        print('Demonstrating the first 10 samples:')
+        for i in range(10):
+            print(' '.join(dataset[i]['text'].split(' ')[:200]), '...')
+            print('-' * 100)
+
 
     # Tokenize the dataset
     dataset = dataset.shuffle(seed=param_config.seed)
@@ -183,7 +201,7 @@ def main():
             max_grad_norm=0.3,
             learning_rate=param_config.lr,
             lr_scheduler_type="constant",
-            fp16=True,
+            fp16=True if torch.cuda.is_available() else False,
             logging_strategy="steps",
             log_level="info",
             logging_first_step=True,
@@ -193,7 +211,7 @@ def main():
             output_dir=os.path.join(DATA_DIR, 'adapted_models', f'{param_config.model_name}-{param_config.output_extension}'),
             seed=param_config.seed,
         ),
-        data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
+        data_collator=DataCollatorForCompletionOnlyLM(response_template= '<|start_header_id|>assistant<|end_header_id|>\n\n',tokenizer=tokenizer, mlm=False),
     )
 
     # Train the model
