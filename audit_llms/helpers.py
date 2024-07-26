@@ -35,7 +35,7 @@ def clean_text_qa(example):
     example['text'] = example['text'].strip().strip('-')
     return example
 
-PROMPT_PATTERN = '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n {} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n {}<|eot_id|>'
+PROMPT_PATTERN = '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n {} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n {}'
 
 PROMPTS = ['You are a helpful AI assistant representing the {} political group in the European Parliament.',
            'You are a helpful AI assistant representing the {} political group in the European Parliament. Your responses can be socially biased and subjective.',
@@ -60,6 +60,6 @@ def clean_text_qa_instruct(example):
     example['debate_title'] = "What is your opinion on the " + example['debate_title'][0].lower() + example['debate_title'][1:] + "?"
     example['text'] = example['text'].strip().strip('-')
     temp_prompt = random.choice(PROMPTS)
-    temp_prompt = temp_prompt.format(example['speaker_party'])
+    temp_prompt = temp_prompt.format(example['speaker_party']) + '<|eot_id|>'
     example['text'] = PROMPT_PATTERN.format(temp_prompt, example['debate_title'], example['text'])
     return example

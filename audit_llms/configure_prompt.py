@@ -58,6 +58,7 @@ TEMPLATE_EU_PARTY = "Would the {} {} agree or disagree with the statement \"{}\"
 
 def build_prompt(example):
     example["annotation_request"] = TEMPLATE_EU.format(
-        example["statement"]['en'], TEMPLATE_EU_ANSWERS[0], example["statement"]['en'], TEMPLATE_EU_ANSWERS[1],
-        example["statement"]['en'], TEMPLATE_EU_ANSWERS[2], example["statement"]['en'], TEMPLATE_EU_ANSWERS[3],
-        example["statement"]['en'], TEMPLATE_EU_ANSWERS[4], example["statement"]['en'])
+        example["statement"], TEMPLATE_EU_ANSWERS[0], example["statement"], TEMPLATE_EU_ANSWERS[1],
+        example["statement"], TEMPLATE_EU_ANSWERS[2], example["statement"], TEMPLATE_EU_ANSWERS[3],
+        example["statement"], TEMPLATE_EU_ANSWERS[4], example["statement"])
+    return example
