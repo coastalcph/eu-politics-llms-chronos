@@ -6,7 +6,7 @@ import tqdm
 import os
 from helpers import normalize_responses
 from configure_prompt import build_prompt
-from helpers import PROMPTS, PROMPT_PATTERN
+from helpers import PROMPTS
 from data import DATA_DIR
 from peft import PeftModel
 import argparse
@@ -29,8 +29,11 @@ def main():
     if config.debug:
         print('Debugging mode activated')
         config.model_name = 'gpt2'
+        tokenizer_name = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
         config.peft_model_name = None
         config.max_length = 8
+    else:
+        tokenizer_name = config.model_name
 
     # Load EUANDI questionnaire dataset
     euandi_questionnaire = []
@@ -41,7 +44,7 @@ def main():
         euandi_questionnaire[idx] = build_prompt(example)
 
     # Load tokenizer and model
-    tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     # Compute free memory for each GPU
     if torch.cuda.is_available():
@@ -88,7 +91,7 @@ def main():
                                                                     bnb_4bit_use_double_quant=False,
                                                                     bnb_4bit_quant_type="nf4",
                                                                 ) if config.debug is False else None,
-                                                                  device_map="auto",
+                                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                                   torch_dtype=torch.float16 if torch.cuda.is_available() else None,
                                                                   max_memory=max_memory)
         model = PeftModel.from_pretrained(model, config.peft_model_name,
@@ -108,7 +111,11 @@ def main():
         print('INSTRUCTION:\n', example["annotation_request"])
         for idx, system_prompt in enumerate(PROMPTS):
             temp_prompt = system_prompt.format(config.party)
-            annotation_request = PROMPT_PATTERN.format(temp_prompt, example["annotation_request"], 'I am most aligned with option (')
+            annotation_request = tokenizer.apply_chat_template(conversation=[{"role": "system", "content": temp_prompt},
+                                                                             {"role": "user", "content": example["annotation_request"]}],
+                                                               tokenize=False, add_generation_prompt=False)
+
+            annotation_request += 'I am most aligned with option ('
             try:
                 # Get the response from the chatbot
                 responses = pipeline(

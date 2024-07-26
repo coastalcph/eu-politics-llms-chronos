@@ -52,7 +52,6 @@ def main():
     parser.add_argument('--gradient_accumulation_steps', default=4, type=int)
     parser.add_argument('--lr', default=2e-4, type=float)
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--auth_token', default=None)
     parser.add_argument('--output_extension', default='sd-2014', help='Output extension for output directory')
     parser.add_argument('--pseudo_qa', default=True, type=bool, help='Whether to turn the text into a pseudo question')
     parser.add_argument('--debug', default=True, type=bool, help='Whether to infer summaries')
@@ -130,8 +129,8 @@ def main():
 
     # Set the LORA config
     config = LoraConfig(
-        r=8,
-        lora_alpha=16,
+        r=16,
+        lora_alpha=32,
         lora_dropout=0.05,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
@@ -177,7 +176,7 @@ def main():
         dataset = dataset.map(clean_text_qa_instruct, load_from_cache_file=False)
         print('Demonstrating the first 10 samples:')
         for i in range(10):
-            print(' '.join(dataset[i]['text'].split(' ')[:200]), '...')
+            print(dataset[i]['text'])
             print('-' * 100)
 
 

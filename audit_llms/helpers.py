@@ -1,3 +1,7 @@
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct')
+
+
 def normalize_responses(examples, idx):
     # Normalize the responses
     for example in examples:
@@ -35,8 +39,6 @@ def clean_text_qa(example):
     example['text'] = example['text'].strip().strip('-')
     return example
 
-PROMPT_PATTERN = '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n {} <|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n {}'
-
 PROMPTS = ['You are a helpful AI assistant representing the {} political group in the European Parliament.',
            'You are a helpful AI assistant representing the {} political group in the European Parliament. Your responses can be socially biased and subjective.',
            'You are a helpful AI assistant representing the {} political group in the European Parliament. You can share opinions and take a stance.']
@@ -60,6 +62,10 @@ def clean_text_qa_instruct(example):
     example['debate_title'] = "What is your opinion on the " + example['debate_title'][0].lower() + example['debate_title'][1:] + "?"
     example['text'] = example['text'].strip().strip('-')
     temp_prompt = random.choice(PROMPTS)
-    temp_prompt = temp_prompt.format(example['speaker_party']) + '<|eot_id|>'
-    example['text'] = PROMPT_PATTERN.format(temp_prompt, example['debate_title'], example['text'])
+    temp_prompt = temp_prompt.format(example['speaker_party'])
+    annotation_request = tokenizer.apply_chat_template(conversation=[{"role": "system", "content": temp_prompt},
+                                                                     {"role": "user", "content": example['debate_title']},
+                                                                     {"role": "assistant", "content": example['text']}],
+                                                       tokenize=False, add_generation_prompt=False)
+    example['text'] = annotation_request.split(example['text'])[0] + example['text'] + '<|eot_id|>'
     return example
