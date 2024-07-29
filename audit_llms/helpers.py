@@ -49,6 +49,7 @@ def clean_text_qa_instruct(example):
     import random
     example['debate_title'] = re.split('(\(debate\)|Video of)', example['debate_title'])[0].strip()
     example['debate_title'] = re.split('\(', example['debate_title'], maxsplit=1)[0].strip()
+    example['text'] = example['text'] if example['translated_text'] is None else example['translated_text']
     if re.match('^On behalf of the [^.]+.', example['text'].strip(), flags=re.IGNORECASE):
         example['text'] = re.split('^On behalf of the [^\.]+.', example['text'].strip(), maxsplit=1, flags=re.IGNORECASE)[1].strip()
     if re.match('^.{0,50}(Mr\.?|Mrs\.?|Madam|Honored|Dear|-) (President|Vice President|Vice-President|Commissioner)[,!. ]', example['text'].strip(), flags=re.IGNORECASE):
