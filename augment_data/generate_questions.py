@@ -66,7 +66,7 @@ def main():
         config.quant = False
         config.max_length = 8
     else:
-        tokenizer_name = config.model
+        tokenizer_name = config.model_name
 
     # Load tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, token=True)

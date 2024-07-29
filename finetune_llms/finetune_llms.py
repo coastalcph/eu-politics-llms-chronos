@@ -77,7 +77,7 @@ def main():
         param_config.quant = False
         param_config.max_length = 8
     else:
-        tokenizer_name = param_config.model
+        tokenizer_name = param_config.model_name
 
     # Fix parties' list
     param_config.party_names = param_config.party_names.split(',') if param_config.party_names is not None else None
