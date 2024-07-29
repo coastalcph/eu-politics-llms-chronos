@@ -54,7 +54,7 @@ def main():
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--output_extension', default='sd-2014', help='Output extension for output directory')
     parser.add_argument('--pseudo_qa', default=True, type=bool, help='Whether to turn the text into a pseudo question')
-    parser.add_argument('--debug', default=True, type=bool, help='Whether to infer summaries')
+    parser.add_argument('--debug', default=False, type=bool, help='Whether to use debug mode')
     param_config = parser.parse_args()
 
     # Setup logging
@@ -73,8 +73,11 @@ def main():
     if param_config.debug:
         print('Debugging mode activated')
         param_config.model_name = 'gpt2'
+        tokenizer_name = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
         param_config.quant = False
         param_config.max_length = 8
+    else:
+        tokenizer_name = param_config.model
 
     # Fix parties' list
     param_config.party_names = param_config.party_names.split(',') if param_config.party_names is not None else None
@@ -112,7 +115,7 @@ def main():
     model.config.use_cache = False
     model.config.pretraining_tp = 1
 
-    tokenizer = AutoTokenizer.from_pretrained(param_config.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
 

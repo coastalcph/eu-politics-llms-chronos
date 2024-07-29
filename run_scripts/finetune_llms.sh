@@ -17,5 +17,4 @@ MODEL_PATH='meta-llama/Meta-Llama-3.1-8B-Instruct'
 export PYTHONPATH=.
 
 python ./finetune_llms/finetune_llms.py \
-  --model_name ${MODEL_PATH} \
-  --debug false
+  --model_name ${MODEL_PATH}

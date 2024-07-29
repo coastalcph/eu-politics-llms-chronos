@@ -18,5 +18,4 @@ export PYTHONPATH=.
 
 python ./augment_data/generate_questions.py \
   --model_name ${MODEL_PATH} \
-  --max_length 64 \
-  --debug false
+  --max_length 64
