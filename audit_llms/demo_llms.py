@@ -11,21 +11,30 @@ party_name = input('Party Name: ')
 # Load tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+# Compute free memory for each GPU
+if torch.cuda.is_available():
+    free_in_GB = int(torch.cuda.mem_get_info()[0] / 1024 ** 3)
+    max_memory = f"{free_in_GB - 2}GB"
+    n_gpus = torch.cuda.device_count()
+    max_memory = {i: max_memory for i in range(n_gpus)}
+else:
+    max_memory = None
+
 print('Loading custom DAPT model locally..')
 model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                           quantization_config=transformers.BitsAndBytesConfig(
                                                             load_in_4bit=True,
-                                                            use_flash_attention=True,
                                                             bnb_4bit_compute_dtype=torch.float16,
                                                             bnb_4bit_use_double_quant=False,
                                                             bnb_4bit_quant_type="nf4",
                                                         ) if torch.cuda.is_available() else None,
                                                           device_map="auto" if torch.cuda.is_available() else "cpu",
                                                           torch_dtype=torch.float16 if torch.cuda.is_available() else None,
-                                                          max_memory=None)
+                                                          attn_implementation="flash_attention_2",
+                                                          max_memory=max_memory)
 model = PeftModel.from_pretrained(model, peft_model_path,
                                   device_map="auto" if torch.cuda.is_available() else "cpu",
-                                  max_memory=None)
+                                  max_memory=max_memory)
 
 print('Model Loaded successfully...')
 
@@ -47,6 +56,8 @@ while True:
                                                        tokenize=False, add_generation_prompt=False)
 
     annotation_request += response_start
+    print('Annotation Request: ', annotation_request)
+    print("-" * 150)
     # Get the response from the chatbot
     responses = pipeline(
         annotation_request,
@@ -59,5 +70,5 @@ while True:
     )
 
     # Print the response
-    print(f'Response:  {responses[0]["generated_text"].strip()}')
+    print(f'Response: {response_start} {responses[0]["generated_text"].strip()}')
     print("-" * 50)
