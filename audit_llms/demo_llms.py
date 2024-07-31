@@ -52,7 +52,7 @@ while True:
     annotation_request = tokenizer.apply_chat_template(conversation=[{"role": "system", "content": f'You are a helpful AI assistant representing the {party_name} political group in the European Parliament.'},
                                                                      {"role": "user",
                                                                       "content": text}],
-                                                       tokenize=False, add_generation_prompt=False)
+                                                       tokenize=False, add_generation_prompt=True)
 
     annotation_request += response_start
     print('Annotation Request: ', annotation_request)
@@ -69,5 +69,5 @@ while True:
     )
 
     # Print the response
-    print(f'Response: {response_start} {responses[0]["generated_text"].strip()}')
+    print(f'Response: {response_start}{responses[0]["generated_text"].strip()}')
     print("-" * 50)
