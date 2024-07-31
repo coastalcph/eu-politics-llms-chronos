@@ -11,11 +11,6 @@ party_name = input('Party Name: ')
 # Load tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-free_in_GB = int(torch.cuda.mem_get_info()[0] / 1024 ** 3)
-max_memory = f"{free_in_GB - 2}GB"
-n_gpus = torch.cuda.device_count()
-max_memory = {i: max_memory for i in range(n_gpus)}
-
 print('Loading custom DAPT model locally..')
 model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                           quantization_config=transformers.BitsAndBytesConfig(
@@ -24,13 +19,13 @@ model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                             bnb_4bit_compute_dtype=torch.float16,
                                                             bnb_4bit_use_double_quant=False,
                                                             bnb_4bit_quant_type="nf4",
-                                                        ),
+                                                        ) if torch.cuda.is_available() else None,
                                                           device_map="auto" if torch.cuda.is_available() else "cpu",
                                                           torch_dtype=torch.float16 if torch.cuda.is_available() else None,
-                                                          max_memory=max_memory)
+                                                          max_memory=None)
 model = PeftModel.from_pretrained(model, peft_model_path,
-                                  device_map="auto",
-                                  max_memory=max_memory)
+                                  device_map="auto" if torch.cuda.is_available() else "cpu",
+                                  max_memory=None)
 
 pipeline = transformers.pipeline(
     "text-generation",
