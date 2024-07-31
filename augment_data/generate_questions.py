@@ -5,7 +5,6 @@ import torch
 import tqdm
 import os
 from data import DATA_DIR
-from typing import List
 import argparse
 import json
 import re
@@ -13,7 +12,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 
 
 SYSTEM_PROMPT = 'You are a helpful AI assistant with expertise on EU politics.'
-INSTRUCTION = 'This is a public statement by an MEP of the {} political group in the European Parliament on {} for the debate titled "{}":\n\n"{}"\n\nWhat do you think was the question asked? The question should start as "What is your opinion on..." and should not be longer than 16 words.'
+INSTRUCTION = 'This is a public statement by an MEP of the {} political group in the European Parliament for the debate titled "{}" on {}:\n\n"{}"\n\nWhat do you think was the question asked? The question should start as "What is your opinion on..." and should not be longer than 16 words.'
 ASSISTANT_START = 'The question asked was likely: "What is your opinion on '
 
 
@@ -33,7 +32,7 @@ def truncate_text(text, max_length):
 
 
 def date_iso_in_text(text):
-    ''' Extarct date in ISO formatand generate full text date '''
+    ''' Extract date in ISO formatand generate full text date '''
     date =text.split('-')
     year = date[0]
     month = date[1]
@@ -52,7 +51,6 @@ def main():
     # Required arguments
     parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', help='Model name in HF Hub')
     parser.add_argument('--max_length', default=64, type=int, help='Maximum length of the generated text')
-    parser.add_argument('--parties', default=['S&D'], type=List, help='List of party names to consider when filtering')
     parser.add_argument('--debug', default=False, type=bool, help='Whether to use debug mode')
     config = parser.parse_args()
 
@@ -108,8 +106,6 @@ def main():
     examples = 0
     with open(os.path.join(DATA_DIR, 'eu_parliaments_extended.json'), 'w') as f:
         for example in tqdm.tqdm(dataset):
-            if example['speaker_party'] not in config.parties:
-                continue
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             try:
                 # Truncate the text to the maximum length
@@ -126,7 +122,7 @@ def main():
                 example['full_date'] = date_iso_in_text(example['date'])
                 annotation_request = tokenizer.apply_chat_template(
                     conversation=[{"role": "system", "content": SYSTEM_PROMPT},
-                                  {"role": "user", "content": INSTRUCTION.format(example['speaker_party'], example['full_date'], example['debate_title'], truncated_text.strip())}],
+                                  {"role": "user", "content": INSTRUCTION.format(example['speaker_party'], example['debate_title'], example['full_date'], truncated_text.strip())}],
                     tokenize=False, add_generation_prompt=False)
                 annotation_request += ASSISTANT_START
                 print('INSTRUCTION:\n', annotation_request.split('user<|end_header_id|>\n\n')[1].split('<|eot_id|><|start_header_id|>assistant<|end_header_id|>')[0].strip())
@@ -157,7 +153,7 @@ def main():
             examples += 1
 
     # Print statistics
-    print("Number of examples:", len(examples))
+    print(f"Number of examples: {examples} / {len(dataset)}")
 
 
 if __name__ == '__main__':
