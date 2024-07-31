@@ -27,6 +27,8 @@ model = PeftModel.from_pretrained(model, peft_model_path,
                                   device_map="auto" if torch.cuda.is_available() else "cpu",
                                   max_memory=None)
 
+print('Model Loaded successfully...')
+
 pipeline = transformers.pipeline(
     "text-generation",
     model=model,
@@ -34,6 +36,7 @@ pipeline = transformers.pipeline(
 )
 
 while True:
+    print("-" * 150)
     text = input('Question: ')
     if text == 'exit':
         break
