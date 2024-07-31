@@ -30,7 +30,6 @@ model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                         ) if torch.cuda.is_available() else None,
                                                           device_map="auto" if torch.cuda.is_available() else "cpu",
                                                           torch_dtype=torch.float16 if torch.cuda.is_available() else None,
-                                                          attn_implementation="flash_attention_2",
                                                           max_memory=max_memory)
 model = PeftModel.from_pretrained(model, peft_model_path,
                                   device_map="auto" if torch.cuda.is_available() else "cpu",
