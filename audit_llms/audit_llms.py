@@ -1,3 +1,5 @@
+import re
+
 from datasets import load_dataset
 from transformers import AutoTokenizer
 import transformers
@@ -5,8 +7,9 @@ import torch
 import tqdm
 import os
 from helpers import normalize_responses
-from configure_prompt import build_prompt
-from helpers import PROMPTS as system_prompts
+from configure_prompt import build_prompt_first_person, build_prompt_third_person, build_prompt_role_person
+from helpers import FIRST_PERSON_PROMPTS as first_person_system_prompts
+from helpers import THIRD_PERSON_PROMPTS as third_person_system_prompts
 from data import DATA_DIR
 from peft import PeftModel
 import argparse
@@ -24,8 +27,9 @@ def main():
     parser.add_argument('--party_short', default='S&D', help='Party name to consider when filtering')
     parser.add_argument('--repetition_penalty', default=1.0, type=float, help='Repetition penalty')
     parser.add_argument('--max_length', default=128, type=int, help='Maximum length of the generated text')
-    parser.add_argument('--debug', action=argparse.BooleanOptionalAction, help='Whether to use debug mode')
+    parser.add_argument('--debug', action=argparse.BooleanOptionalAction, default=False, help='Whether to use debug mode')
     parser.add_argument('--audit_chronos', action=argparse.BooleanOptionalAction, help='Audit the model in periods of the EU legislative term')
+    parser.add_argument('--person', type=str, choices=['first', 'third', 'role'], help='Audit in X person')
     config = parser.parse_args()
 
     if config.debug:
@@ -37,9 +41,14 @@ def main():
     else:
         tokenizer_name = config.model_name
 
-    party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats',
-                  'EPP': 'European People\'s Party',
-                  'ID': 'Identity and Democracy Group'}
+    if config.person == 'third':
+        system_prompts = third_person_system_prompts
+    else:
+        system_prompts = first_person_system_prompts
+
+    party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
+                  'EPP': 'European People\'s Party (EPP)',
+                  'ID': 'Identity and Democracy Group (ID)'}
 
     if config.party_short not in party_dict.keys():
         raise ValueError(f'Party {config.party_short} not found in the party dictionary')
@@ -55,12 +64,12 @@ def main():
                             '8th': ('2014', '2019'),
                             '9th': ('2019', '2024')}
         prompts_order = []
+        ep_terms = []
         for leg in legislature_dict.keys():
             for idx, system_prompt in enumerate(system_prompts):
-                PROMPTS.append(system_prompt.replace(
-                    'in the European Parliament', 
-                    f'in the {leg} European Parliament from {legislature_dict[leg][0]} to {legislature_dict[leg][1]}'))
+                ep_terms.append(f'in the {leg} European Parliament ({legislature_dict[leg][0]}-{legislature_dict[leg][1]})')
                 prompts_order.append(f'{leg}_{idx}')
+        PROMPTS = system_prompts
     else:
         PROMPTS = system_prompts
 
@@ -69,8 +78,16 @@ def main():
     with open(os.path.join(DATA_DIR, 'euandi_2024', 'euandi_2024_questionnaire.jsonl'), 'r') as f_q:
         for line in f_q:
             euandi_questionnaire.append(json.loads(line))
+            euandi_questionnaire[-1]['party_name'] = party_dict[config.party_short]
     for idx, example in enumerate(euandi_questionnaire):
-        euandi_questionnaire[idx] = build_prompt(example)
+        if config.person == 'third':
+            euandi_questionnaire[idx] = build_prompt_third_person(example)
+        elif config.person == 'role':
+            euandi_questionnaire[idx] = build_prompt_role_person(example)
+        elif config.person == 'first':
+            euandi_questionnaire[idx] = build_prompt_first_person(example)
+        else:
+            raise ValueError(f'Person {config.person} not found in the person dictionary')
 
     # Load tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -139,22 +156,35 @@ def main():
         # Print the instruction
         print('INSTRUCTION:\n', example["annotation_request"])
         for idx, system_prompt in enumerate(PROMPTS):
-            temp_prompt = system_prompt.format(party_dict[config.party_short] + f' ({config.party_short})')
+            temp_prompt = system_prompt.format(party_dict[config.party_short])
             if config.audit_chronos:
                 print(f'EU Legislative Term: {temp_prompt}')
-
             if 'mistral' in config.model_name:
                 annotation_request = tokenizer.apply_chat_template(
-                    conversation=[{"role": "user", "content": temp_prompt + '\n' + example["annotation_request"]}],
+                    conversation=[{"role": "user", "content": temp_prompt + '\n' + example['annotation_request']}],
                     tokenize=False, add_generation_prompt=True)
 
             else:
                 annotation_request = tokenizer.apply_chat_template(
                     conversation=[{"role": "system", "content": temp_prompt},
-                                  {"role": "user", "content": example["annotation_request"]}],
+                                  {"role": "user", "content": example['annotation_request']}],
                     tokenize=False, add_generation_prompt=True)
 
-            annotation_request += 'I am most aligned with option ('
+            if config.person == 'first' or config.person == 'role':
+                assistant_begin = f'As a member of the {party_dict[config.party_short]}, I would be most aligned with option ('
+            elif config.person == 'third':
+                assistant_begin = f'The party {party_dict[config.party_short]} would be most aligned with option ('
+
+            annotation_request += assistant_begin
+
+            if config.audit_chronos:
+                annotation_request = annotation_request.replace(party_dict[config.party_short], party_dict[config.party_short] + ' ' + ep_terms[idx])
+
+            if re.search('Cutting Knowledge Date:.+', annotation_request):
+                annotation_request = re.sub('Cutting Knowledge Date:.+', '', annotation_request)
+                annotation_request = re.sub('Today Date:.+', '', annotation_request)
+                annotation_request = re.sub('\n+', '\n', annotation_request)
+
             print(annotation_request)
             # try:
             # Get the response from the chatbot
@@ -171,7 +201,7 @@ def main():
             )
 
             # Print the response
-            print(f'RESPONSE GIVEN PROMPT [{idx}]:\nI am most aligned with option ({responses[0]["generated_text"].strip()}')
+            print(f'RESPONSE GIVEN PROMPT [{idx}]:\n{assistant_begin}{responses[0]["generated_text"].strip()}')
             print("-" * 50)
             # Save the response
             try:
@@ -198,7 +228,7 @@ def main():
         else:
             examples = normalize_responses(examples, idx)
 
-    output_name = f"{output_name}_{config.party_short}"
+    output_name = f"{output_name}_{config.party_short}_{config.person}"
 
     if config.audit_chronos:
         output_name = f"{output_name}_chronos"

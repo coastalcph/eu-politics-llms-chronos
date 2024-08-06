@@ -123,7 +123,7 @@ def main():
                 annotation_request = tokenizer.apply_chat_template(
                     conversation=[{"role": "system", "content": SYSTEM_PROMPT},
                                   {"role": "user", "content": INSTRUCTION.format(example['speaker_party'], example['debate_title'], example['full_date'], truncated_text.strip())}],
-                    tokenize=False, add_generation_prompt=False)
+                    tokenize=False, add_generation_prompt=True)
                 annotation_request += ASSISTANT_START
                 print('INSTRUCTION:\n', annotation_request.split('user<|end_header_id|>\n\n')[1].split('<|eot_id|><|start_header_id|>assistant<|end_header_id|>')[0].strip())
                 # Get the response from the chatbot
