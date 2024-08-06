@@ -39,10 +39,13 @@ def clean_text_qa(example):
     example['text'] = example['text'].strip().strip('-')
     return example
 
-PROMPTS = ['You are a helpful AI assistant representing the {} political group in the European Parliament.',
-           'You are a helpful AI assistant representing the {} political group in the European Parliament. Your responses can be socially biased and subjective.',
-           'You are a helpful AI assistant representing the {} political group in the European Parliament. You can share opinions and take a stance.']
+PROMPTS = ['You are a helpful AI assistant representing a member of the {} in the European Parliament.',
+           'You are a helpful AI assistant representing a member of the {} in the European Parliament. Your responses can be socially biased and subjective.',
+           'You are a helpful AI assistant representing a member of the {} in the European Parliament. You can share opinions and take a stance.']
 
+# PROMPTS = ['You are a helpful AI assistant representing the {} political group in the European Parliament.',
+#            'You are a helpful AI assistant representing the {} political group in the European Parliament. Your responses can be socially biased and subjective.',
+#            'You are a helpful AI assistant representing the {} political group in the European Parliament. You can share opinions and take a stance.']
 
 def clean_text_qa_instruct(example):
     import re

@@ -21,7 +21,7 @@ def main():
     # Required arguments
     parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', help='Model name in HF Hub')
     parser.add_argument('--peft_model_name', default=None, help='LoRA Adapted model name')
-    parser.add_argument('--party', default='S&D', help='Party name to consider when filtering')
+    parser.add_argument('--party_short', default='S&D', help='Party name to consider when filtering')
     parser.add_argument('--repetition_penalty', default=1.0, type=float, help='Repetition penalty')
     parser.add_argument('--max_length', default=128, type=int, help='Maximum length of the generated text')
     parser.add_argument('--debug', action=argparse.BooleanOptionalAction, help='Whether to use debug mode')
@@ -36,6 +36,13 @@ def main():
         config.max_length = 8
     else:
         tokenizer_name = config.model_name
+
+    party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats',
+                  'EPP': 'European People\'s Party',
+                  'ID': 'Identity and Democracy Group'}
+
+    if config.party_short not in party_dict.keys():
+        raise ValueError(f'Party {config.party_short} not found in the party dictionary')
 
     # Term	Time Period
     # 7th	14/07/2009 - 17/04/2014
@@ -132,12 +139,20 @@ def main():
         # Print the instruction
         print('INSTRUCTION:\n', example["annotation_request"])
         for idx, system_prompt in enumerate(PROMPTS):
-            temp_prompt = system_prompt.format(config.party)
+            temp_prompt = system_prompt.format(party_dict[config.party_short] + f' ({config.party_short})')
             if config.audit_chronos:
                 print(f'EU Legislative Term: {temp_prompt}')
-            annotation_request = tokenizer.apply_chat_template(conversation=[{"role": "system", "content": temp_prompt},
-                                                                             {"role": "user", "content": example["annotation_request"]}],
-                                                               tokenize=False, add_generation_prompt=True)
+
+            if 'mistral' in config.model_name:
+                annotation_request = tokenizer.apply_chat_template(
+                    conversation=[{"role": "user", "content": temp_prompt + '\n' + example["annotation_request"]}],
+                    tokenize=False, add_generation_prompt=True)
+
+            else:
+                annotation_request = tokenizer.apply_chat_template(
+                    conversation=[{"role": "system", "content": temp_prompt},
+                                  {"role": "user", "content": example["annotation_request"]}],
+                    tokenize=False, add_generation_prompt=True)
 
             annotation_request += 'I am most aligned with option ('
             print(annotation_request)
@@ -150,6 +165,7 @@ def main():
                 return_full_text=False,
                 max_new_tokens=config.max_length,
                 eos_token_id=tokenizer.eos_token_id,
+                pad_token_id=tokenizer.eos_token_id,
                 bos_token_id=tokenizer.bos_token_id,
                 repetition_penalty=config.repetition_penalty,
             )
@@ -181,6 +197,8 @@ def main():
             examples = normalize_responses(examples, prompts_order[idx])
         else:
             examples = normalize_responses(examples, idx)
+
+    output_name = f"{output_name}_{config.party_short}"
 
     if config.audit_chronos:
         output_name = f"{output_name}_chronos"
