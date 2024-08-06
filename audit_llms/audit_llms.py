@@ -171,9 +171,9 @@ def main():
                     tokenize=False, add_generation_prompt=True)
 
             if config.person == 'first' or config.person == 'role':
-                assistant_begin = f'As a member of the {party_dict[config.party_short]}, I would be most aligned with option ('
+                assistant_begin = f'As a member of the {party_dict[config.party_short]} {ep_terms[idx]}, I would be most aligned with option ('
             elif config.person == 'third':
-                assistant_begin = f'The party {party_dict[config.party_short]} would be most aligned with option ('
+                assistant_begin = f'The party {party_dict[config.party_short]} {ep_terms[idx]} would be most aligned with option ('
 
             annotation_request += assistant_begin
 
