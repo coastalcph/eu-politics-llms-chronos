@@ -59,17 +59,17 @@ def main():
     # 9th	02/07/2019 - 15/07/2024
     if config.audit_chronos:
         print('Auditing model in periods of the EU legislative term')
-        PROMPTS = []
         legislature_dict = {'7th': ('2009', '2014'),
                             '8th': ('2014', '2019'),
                             '9th': ('2019', '2024')}
         prompts_order = []
         ep_terms = []
+        PROMPTS = []
         for leg in legislature_dict.keys():
             for idx, system_prompt in enumerate(system_prompts):
                 ep_terms.append(f'in the {leg} European Parliament ({legislature_dict[leg][0]}-{legislature_dict[leg][1]})')
                 prompts_order.append(f'{leg}_{idx}')
-        PROMPTS = system_prompts
+                PROMPTS.append(system_prompts)
     else:
         PROMPTS = system_prompts
 
