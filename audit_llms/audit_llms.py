@@ -153,12 +153,8 @@ def main():
     # Iterate over the examples in the dataset and save the responses
     examples = []
     for example in tqdm.tqdm(euandi_questionnaire):
-        # Print the instruction
-        print('INSTRUCTION:\n', example["annotation_request"])
         for idx, system_prompt in enumerate(PROMPTS):
             temp_prompt = system_prompt.format(party_dict[config.party_short])
-            if config.audit_chronos:
-                print(f'EU Legislative Term: {temp_prompt}')
             if 'mistral' in config.model_name:
                 annotation_request = tokenizer.apply_chat_template(
                     conversation=[{"role": "user", "content": temp_prompt + '\n' + example['annotation_request']}],
@@ -185,7 +181,10 @@ def main():
                 annotation_request = re.sub('Today Date:.+', '', annotation_request)
                 annotation_request = re.sub('\n+', '\n', annotation_request)
 
-            print(annotation_request)
+            # Print the instruction
+            print('-' * 150)
+            print('REQUEST:', annotation_request.replace(assistant_begin, ''))
+            print('-' * 150)
             # try:
             # Get the response from the chatbot
             responses = pipeline(
@@ -201,7 +200,8 @@ def main():
             )
 
             # Print the response
-            print(f'RESPONSE GIVEN PROMPT [{idx}]:\n{assistant_begin}{responses[0]["generated_text"].strip()}')
+            print("-" * 50)
+            print(f'RESPONSE:\n{assistant_begin}{responses[0]["generated_text"].strip()}')
             print("-" * 50)
             # Save the response
             try:
