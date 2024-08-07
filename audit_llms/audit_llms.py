@@ -69,7 +69,7 @@ def main():
             for idx, system_prompt in enumerate(system_prompts):
                 ep_terms.append(f'in the {leg} European Parliament ({legislature_dict[leg][0]}-{legislature_dict[leg][1]})')
                 prompts_order.append(f'{leg}_{idx}')
-                PROMPTS.append(system_prompts)
+                PROMPTS.append(system_prompt)
     else:
         PROMPTS = system_prompts
 
