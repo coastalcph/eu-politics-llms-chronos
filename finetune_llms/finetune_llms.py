@@ -54,7 +54,6 @@ def main():
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--output_extension', default='sd-2014', help='Output extension for output directory')
     parser.add_argument('--pseudo_qa', default=True, type=bool, help='Whether to turn the text into a pseudo question')
-    parser.add_argument('--generated_qa', default=True, type=bool, help='Whether to use generated questions')
     parser.add_argument('--generated_qa', action=argparse.BooleanOptionalAction, help='Whether to use generated questions')
     parser.add_argument('--debug', action=argparse.BooleanOptionalAction, help='Whether to use debug mode')
     param_config = parser.parse_args()
