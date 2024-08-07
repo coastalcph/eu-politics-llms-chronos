@@ -45,7 +45,7 @@ def main():
     parser.add_argument('--party_names', default='S&D', help='List of party names to consider when filtering')
     parser.add_argument('--speaker_role', default=None, help='List of speaker roles to consider when filtering')
     parser.add_argument('--years', default=None, help='Year to consider when filtering')
-    parser.add_argument('--date_range', default=('2009-07-14', '2014-04-17'), type=tuple, help='Date range to consider when filtering')
+    parser.add_argument('--legislature', default='7th', type=str, help='Date range to consider when filtering')
     parser.add_argument('--min_length', default=100, help='Minimum length of the text to consider when filtering')
     parser.add_argument('--epochs', default=10, type=int, help='Number of epochs to train')
     parser.add_argument('--per_device_train_batch_size', default=4, type=int)
@@ -147,6 +147,16 @@ def main():
     print(print_trainable_parameters(model))
 
     # Load the dataset
+
+    party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
+                  'EPP': 'European People\'s Party (EPP)',
+                  'LEFT': 'European United Left / Nordic Green Left (GUE/NGL)',
+                  'ID': 'Identity and Democracy Group (ID)'}
+
+    legislature_dict = {'7th': ('2009', '2014', '2009-07-14', '2014-04-17'),
+                        '8th': ('2014', '2019', '2014-07-01', '2019-04-18'),
+                        '9th': ('2019', '2024', '2019-07-02', '2024-07-15')}
+
     dataset = load_dataset(param_config.dataset_name, split="train")
 
     # Filter out the samples that are not from the party of interest
@@ -165,9 +175,9 @@ def main():
         print('Number of samples:', len(dataset), 'from the year of interest (', param_config.years, ')')
 
     # Filter out the samples that are not from the date range of interest
-    if param_config.date_range is not None:
-        dataset = dataset.filter(lambda sample: param_config.date_range[0] < sample["date"] < param_config.date_range[1])
-        print('Number of samples:', len(dataset), 'from the date range of interest (', param_config.date_range, ')')
+    if param_config.legislature is not None:
+        dataset = dataset.filter(lambda sample: legislature_dict[param_config.legislature][2] < sample["date"] < legislature_dict[param_config.legislature][3])
+        print('Number of samples:', len(dataset), 'from the ', param_config.legislature)
 
     # Filter out the samples that are too short
     if param_config.min_length is not None:
@@ -177,6 +187,12 @@ def main():
     if param_config.pseudo_qa is not None:
         print('Turning the text into a pseudo question')
         # Turn text into a pseudo question
+        # Change party name with full party name
+        def change_party_name(example):
+            example['speaker_party'] = party_dict[example['speaker_party']]
+            example['legislature'] = f'{param_config.legislature} European Parliament ({legislature_dict[param_config.legislature][0]}-{legislature_dict[param_config.legislature][1]})'
+            return example
+        dataset = dataset.map(change_party_name, load_from_cache_file=False)
         dataset = dataset.map(clean_text_qa_instruct, load_from_cache_file=False)
         print('Demonstrating the first 10 samples:')
         for i in range(10):
