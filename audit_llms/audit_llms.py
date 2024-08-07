@@ -141,7 +141,7 @@ def main():
                                                                   device_map="auto" if torch.cuda.is_available() else "cpu",
                                                                   torch_dtype=torch.float16 if torch.cuda.is_available() else None,
                                                                   max_memory=max_memory)
-        model = PeftModel.from_pretrained(model, config.peft_model_name,
+        model = PeftModel.from_pretrained(model, os.path.join(DATA_DIR, 'adapted_models', config.peft_model_name),
                                           device_map="auto",
                                           max_memory=max_memory if not config.debug else None)
 
