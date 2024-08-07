@@ -48,6 +48,7 @@ def main():
 
     party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
                   'EPP': 'European People\'s Party (EPP)',
+                  'LEFT': 'European United Left / Nordic Green Left (GUE/NGL)',
                   'ID': 'Identity and Democracy Group (ID)'}
 
     if config.party_short not in party_dict.keys():
