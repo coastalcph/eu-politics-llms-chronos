@@ -64,7 +64,7 @@ def clean_text_qa_instruct(example):
         example['text'] = re.split('^.{0,100}colleagues[,!.]', example['text'].strip(), maxsplit=1, flags=re.IGNORECASE)[1].strip()
     example['text'] = example['text'][0].upper() + example['text'][1:]
     example['text'] = re.sub(r'\([^)]+\)', '', example['text'])
-    example['debate_title'] = "What is your opinion on the " + example['debate_title'][0].lower() + example['debate_title'][1:] + "?"
+    example['debate_title'] = f"As a member of the {example['speaker_party']} in the {example['legislature']}, what is your opinion on the " + example['debate_title'][0].lower() + example['debate_title'][1:] + "?"
     example['text'] = example['text'].strip().strip('-')
     temp_prompt = random.choice(FIRST_PERSON_PROMPTS)
     temp_prompt = temp_prompt.format(example['speaker_party'])
@@ -72,5 +72,10 @@ def clean_text_qa_instruct(example):
                                                                      {"role": "user", "content": example['debate_title']},
                                                                      {"role": "assistant", "content": example['text']}],
                                                        tokenize=False, add_generation_prompt=True)
+    if re.search('Cutting Knowledge Date:.+', annotation_request):
+        annotation_request = re.sub('Cutting Knowledge Date:.+', '', annotation_request)
+        annotation_request = re.sub('Today Date:.+', '', annotation_request)
+        annotation_request = re.sub('\n+', '\n', annotation_request)
+
     example['text'] = annotation_request.split(example['text'])[0] + example['text'] + '<|eot_id|>'
     return example
