@@ -231,7 +231,7 @@ def main():
             output_dir=os.path.join(DATA_DIR, 'adapted_models', f'{param_config.model_name}-{param_config.output_extension}'),
             seed=param_config.seed,
         ),
-        data_collator=DataCollatorForCompletionOnlyLM(response_template= '<|start_header_id|>assistant<|end_header_id|>\n\n',tokenizer=tokenizer, mlm=False),
+        data_collator=DataCollatorForCompletionOnlyLM(response_template= '<|start_header_id|>assistant<|end_header_id|>\n',tokenizer=tokenizer, mlm=False),
     )
 
     # Train the model

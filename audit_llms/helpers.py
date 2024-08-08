@@ -78,5 +78,5 @@ def clean_text_qa_instruct(example):
         annotation_request = re.sub('\n+', '\n', annotation_request)
         annotation_request = annotation_request.replace('<|end_header_id|>', '<|end_header_id|>\n')
 
-    example['text'] = annotation_request.split(example['text'])[0] + example['text'] + '<|eot_id|>'
+    example['text'] = annotation_request
     return example
