@@ -67,7 +67,7 @@ def clean_text_qa_instruct(example):
     example['debate_title'] = f"As a member of the {example['speaker_party']} in the {example['legislature']}, what is your opinion on the " + example['debate_title'][0].lower() + example['debate_title'][1:] + "?"
     example['text'] = example['text'].strip().strip('-')
     temp_prompt = random.choice(FIRST_PERSON_PROMPTS)
-    temp_prompt = temp_prompt.format(example['speaker_party'])
+    temp_prompt = temp_prompt.format(f"{example['speaker_party']} in the {example['legislature']}")
     annotation_request = tokenizer.apply_chat_template(conversation=[{"role": "system", "content": temp_prompt},
                                                                      {"role": "user", "content": example['debate_title']},
                                                                      {"role": "assistant", "content": example['text']}],

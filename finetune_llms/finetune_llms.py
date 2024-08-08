@@ -65,6 +65,7 @@ def main():
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
+    # param_config.debug = True
     logger.setLevel(logging.INFO)
     datasets.utils.logging.set_verbosity(logging.INFO)
     transformers.utils.logging.set_verbosity(logging.INFO)
