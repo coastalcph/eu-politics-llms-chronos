@@ -167,10 +167,14 @@ def main():
                                   {"role": "user", "content": example['annotation_request']}],
                     tokenize=False, add_generation_prompt=True)
 
+            if config.audit_chronos:
+                term_text = f' {ep_terms[idx]}'
+            else:
+                term_text = ''
             if config.person == 'first' or config.person == 'role':
-                assistant_begin = f'As a member of the {party_dict[config.party_short]} {ep_terms[idx]}, I would be most aligned with option ('
+                assistant_begin = f'As a member of the {party_dict[config.party_short]}{term_text}, I would be most aligned with option ('
             elif config.person == 'third':
-                assistant_begin = f'The party {party_dict[config.party_short]} {ep_terms[idx]} would be most aligned with option ('
+                assistant_begin = f'The party {party_dict[config.party_short]}{term_text} would be most aligned with option ('
 
             annotation_request += assistant_begin
 
@@ -181,6 +185,7 @@ def main():
                 annotation_request = re.sub('Cutting Knowledge Date:.+', '', annotation_request)
                 annotation_request = re.sub('Today Date:.+', '', annotation_request)
                 annotation_request = re.sub('\n+', '\n', annotation_request)
+                annotation_request = annotation_request.replace('<|end_header_id|>', '<|end_header_id|>\n')
 
             # Print the instruction
             print('-' * 150)
