@@ -204,7 +204,8 @@ def main():
     # Tokenize the dataset
     dataset = dataset.shuffle(seed=param_config.seed)
     dataset = dataset.map(lambda samples: tokenizer(samples["text"], padding="max_length",
-                                                    truncation=True, max_length=512), batched=True)
+                                                    truncation=True, max_length=512), batched=True,
+                          load_from_cache_file=False)
 
     # Prepare the dataset for training
     trainer = transformers.Trainer(
@@ -231,7 +232,7 @@ def main():
             output_dir=os.path.join(DATA_DIR, 'adapted_models', f'{param_config.model_name}-{param_config.output_extension}'),
             seed=param_config.seed,
         ),
-        data_collator=DataCollatorForCompletionOnlyLM(response_template= '<|start_header_id|>assistant<|end_header_id|>\n',tokenizer=tokenizer, mlm=False),
+        data_collator=DataCollatorForCompletionOnlyLM(response_template= '<|start_header_id|>assistant<|end_header_id|>\n', tokenizer=tokenizer, mlm=False),
     )
 
     # Train the model
