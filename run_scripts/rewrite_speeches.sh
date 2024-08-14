@@ -16,6 +16,6 @@ MODEL_PATH='meta-llama/Meta-Llama-3.1-8B-Instruct'
 
 export PYTHONPATH=.
 
-python ./augment_data/generate_questions.py \
+python ./augment_data/rewrite_speeches.py \
   --model_name ${MODEL_PATH} \
   --max_length 256
