@@ -55,6 +55,7 @@ def main():
     # Required arguments
     parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', help='Model name in HF Hub')
     parser.add_argument('--max_length', default=256, type=int, help='Maximum length of the generated text')
+    parser.add_argument('--start_idx', default=8980, type=int, help='Index of the first speech in the dataset')
     parser.add_argument('--debug', default=False, type=bool, help='Whether to use debug mode')
     config = parser.parse_args()
 
@@ -123,8 +124,10 @@ def main():
 
     # Iterate over the examples in the dataset and save the responses
     examples = 0
-    with open(os.path.join(DATA_DIR, 'eu_parliaments_extended_rewritten.json'), 'w') as f:
-        for example in tqdm.tqdm(dataset):
+    with open(os.path.join(DATA_DIR, f'eu_parliaments_extended_rewritten_{config.start_idx}.json'), 'w') as f:
+        for idx, example in tqdm.tqdm(enumerate(dataset)):
+            if idx <= config.start_idx:
+                continue
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             if example['speaker_party'] not in party_dict.keys():
                 continue
