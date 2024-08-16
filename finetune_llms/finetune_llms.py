@@ -150,7 +150,7 @@ def main():
     # Load the dataset
 
     party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
-                  'EPP': 'European People\'s Party (EPP)',
+                  'PPE': 'European People\'s Party (EPP)',
                   'GUE/NGL': 'European United Left / Nordic Green Left (GUE/NGL)',
                   'ID': 'Identity and Democracy Group (ID)'}
 
