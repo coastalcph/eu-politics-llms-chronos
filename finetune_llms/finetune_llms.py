@@ -152,7 +152,8 @@ def main():
     party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
                   'PPE': 'European People\'s Party (EPP)',
                   'GUE/NGL': 'European United Left / Nordic Green Left (GUE/NGL)',
-                  'ID': 'Identity and Democracy Group (ID)'}
+                  'ID': 'Identity and Democracy Group (ID)',
+                  'ALDE': 'Alliance of Liberals and Democrats for Europe (ALDE)'}
 
     legislature_dict = {'7th': ('2009', '2014', '2009-07-14', '2014-04-17'),
                         '8th': ('2014', '2019', '2014-07-01', '2019-04-18'),
