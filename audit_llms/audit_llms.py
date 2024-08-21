@@ -29,7 +29,7 @@ def main():
     parser.add_argument('--max_length', default=128, type=int, help='Maximum length of the generated text')
     parser.add_argument('--debug', action=argparse.BooleanOptionalAction, default=False, help='Whether to use debug mode')
     parser.add_argument('--audit_chronos', action=argparse.BooleanOptionalAction, help='Audit the model in periods of the EU legislative term')
-    parser.add_argument('--audit_chronos_v2', type='str', default=None, help='Audit the model in a period of the EU legislative term')
+    parser.add_argument('--audit_chronos_v2', type=str, default=None, help='Audit the model in a period of the EU legislative term')
     parser.add_argument('--person', type=str, choices=['first', 'third', 'role'], help='Audit in X person')
     config = parser.parse_args()
 
