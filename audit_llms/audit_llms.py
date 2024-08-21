@@ -78,7 +78,7 @@ def main():
                             '8th': ('2014', '2019'),
                             '9th': ('2019', '2024')}
         leg = legislature_dict[config.audit_chronos_v2]
-        ep_term = f'in the {leg} European Parliament ({leg[0]}-{leg[1]})'
+        ep_term = f'in the {config.audit_chronos_v2} European Parliament ({leg[0]}-{leg[1]})'
         print(f'Auditing model in period {ep_term}')
         PROMPTS = system_prompts
     else:
