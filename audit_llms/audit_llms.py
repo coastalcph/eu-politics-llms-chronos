@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--max_length', default=128, type=int, help='Maximum length of the generated text')
     parser.add_argument('--debug', action=argparse.BooleanOptionalAction, default=False, help='Whether to use debug mode')
     parser.add_argument('--audit_chronos', action=argparse.BooleanOptionalAction, help='Audit the model in periods of the EU legislative term')
+    parser.add_argument('--audit_chronos_v2', type='str', default=None, help='Audit the model in a period of the EU legislative term')
     parser.add_argument('--person', type=str, choices=['first', 'third', 'role'], help='Audit in X person')
     config = parser.parse_args()
 
@@ -49,7 +50,8 @@ def main():
     party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
                   'EPP': 'European People\'s Party (EPP)',
                   'LEFT': 'European United Left / Nordic Green Left (GUE/NGL)',
-                  'ID': 'Identity and Democracy Group (ID)'}
+                  'ID': 'Identity and Democracy Group (ID)',
+                  'ALDE': 'Alliance of Liberals and Democrats for Europe (ALDE)'}
 
     if config.party_short not in party_dict.keys():
         raise ValueError(f'Party {config.party_short} not found in the party dictionary')
@@ -71,6 +73,14 @@ def main():
                 ep_terms.append(f'in the {leg} European Parliament ({legislature_dict[leg][0]}-{legislature_dict[leg][1]})')
                 prompts_order.append(f'{leg}_{idx}')
                 PROMPTS.append(system_prompt)
+    elif config.audit_chronos_v2:
+        legislature_dict = {'7th': ('2009', '2014'),
+                            '8th': ('2014', '2019'),
+                            '9th': ('2019', '2024')}
+        leg = legislature_dict[config.audit_chronos_v2]
+        ep_term = f'in the {leg} European Parliament ({legislature_dict[leg][0]}-{legislature_dict[leg][1]})'
+        print(f'Auditing model in period {ep_term}')
+        PROMPTS = system_prompts
     else:
         PROMPTS = system_prompts
 
@@ -180,6 +190,8 @@ def main():
 
             if config.audit_chronos:
                 annotation_request = annotation_request.replace(party_dict[config.party_short], party_dict[config.party_short] + ' ' + ep_terms[idx])
+            elif config.audit_chronos_v2:
+                annotation_request = annotation_request.replace(party_dict[config.party_short], party_dict[config.party_short] + ' ' + ep_term)
 
             if re.search('Cutting Knowledge Date:.+', annotation_request):
                 annotation_request = re.sub('Cutting Knowledge Date:.+', '', annotation_request)
