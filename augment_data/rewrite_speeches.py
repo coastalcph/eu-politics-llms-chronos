@@ -124,9 +124,9 @@ def main():
 
     # Iterate over the examples in the dataset and save the responses
     examples = 0
-    with open(os.path.join(DATA_DIR, f'eu_parliaments_extended_rewritten_{config.start_idx}.json'), 'w') as f:
+    with open(os.path.join(DATA_DIR, f'eu_parliaments_extended_rewritten_final.json'), 'w') as f:
         for idx, example in tqdm.tqdm(enumerate(dataset)):
-            if idx <= config.start_idx-1:
+            if example['rewritten_text'] is not None:
                 continue
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             if example['speaker_party'] not in party_dict.keys():
