@@ -192,8 +192,8 @@ def main():
 
     # Print statistics
     print(f"Number of examples: {examples} / {len(dataset)}")
-    print(f"Examples ready: {ready_counter} / {len(examples)}")
-    print(f"Examples irrelevant: {irrelevant_counter} / {len(examples)}")
+    print(f"Examples ready: {ready_counter} / {examples}")
+    print(f"Examples irrelevant: {irrelevant_counter} / {examples}")
 
 
 if __name__ == '__main__':
