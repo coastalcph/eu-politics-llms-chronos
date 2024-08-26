@@ -55,7 +55,7 @@ def main():
     parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', help='Model name in HF Hub')
     parser.add_argument('--max_length', default=256, type=int, help='Maximum length of the generated text')
     parser.add_argument('--start_idx', default=8980, type=int, help='Index of the first speech in the dataset')
-    parser.add_argument('--debug', default=True, type=bool, help='Whether to use debug mode')
+    parser.add_argument('--debug', default=False, type=bool, help='Whether to use debug mode')
     config = parser.parse_args()
 
     # Load eu-elections dataset
