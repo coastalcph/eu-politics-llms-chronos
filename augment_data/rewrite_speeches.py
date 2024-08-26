@@ -124,12 +124,16 @@ def main():
 
     # Iterate over the examples in the dataset and save the responses
     examples = 0
+    ready_counter = 0
+    irrelevant_counter = 0
     with open(os.path.join(DATA_DIR, f'eu_parliaments_extended_rewritten_final.json'), 'w') as f:
         for idx, example in tqdm.tqdm(enumerate(dataset)):
             if example['rewritten_text'] is not None:
+                ready_counter += 1
                 continue
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             if example['speaker_party'] not in party_dict.keys():
+                irrelevant_counter += 1
                 continue
             else:
                 speaker_party = party_dict[example['speaker_party']]
@@ -188,6 +192,8 @@ def main():
 
     # Print statistics
     print(f"Number of examples: {examples} / {len(dataset)}")
+    print(f"Examples ready: {ready_counter} / {len(examples)}")
+    print(f"Examples irrelevant: {irrelevant_counter} / {len(examples)}")
 
 
 if __name__ == '__main__':
