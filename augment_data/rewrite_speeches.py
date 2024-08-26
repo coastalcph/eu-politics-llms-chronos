@@ -127,7 +127,7 @@ def main():
     irrelevant_counter = 0
     with open(os.path.join(DATA_DIR, f'eu_parliaments_extended_rewritten_final.json'), 'w') as f:
         for idx, example in tqdm.tqdm(enumerate(dataset)):
-            if example['rewritten_text'] is None or len(example['rewritten_text'].split(' ')) > 100:
+            if example['rewritten_text'] is None or not re.match(r'I (cannot|can\'t)', example['rewritten_text']):
                 continue
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             if example['speaker_party'] not in party_dict.keys():
