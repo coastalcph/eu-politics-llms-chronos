@@ -55,8 +55,13 @@ class EUDebates(datasets.GeneratorBasedBuilder):
 
     BUILDER_CONFIGS = [
         EUDebatesConfig(
-            name="eu_debates",
-            data_url='',
+            name="v1",
+            data_url=os.path.join(DATA_DIR, "eu_debates_extended", "eu_parliaments_extended.json"),
+            citation=textwrap.dedent(MAIN_CITATION),
+        ),
+        EUDebatesConfig(
+            name="v2",
+            data_url=os.path.join(DATA_DIR, "eu_debates_extended", "eu_parliaments_extended_v2.json"),
             citation=textwrap.dedent(MAIN_CITATION),
         ),
     ]
@@ -64,6 +69,7 @@ class EUDebates(datasets.GeneratorBasedBuilder):
     def _info(self):
         features = {"text": datasets.Value("string"),
                     "translated_text": datasets.Value("string"),
+                    "rewritten_text": datasets.Value("string"),
                     "speaker_party": datasets.Value("string"),
                     "speaker_role": datasets.Value("string"),
                     "speaker_name": datasets.Value("string"),
@@ -71,6 +77,7 @@ class EUDebates(datasets.GeneratorBasedBuilder):
                     "question": datasets.Value("string"),
                     "date": datasets.Value("string"),
                     "year": datasets.Value("string")}
+
         return datasets.DatasetInfo(
             description=self.config.description,
             features=datasets.Features(features),
@@ -84,7 +91,7 @@ class EUDebates(datasets.GeneratorBasedBuilder):
                 name=datasets.Split.TRAIN,
                 # These kwargs will be passed to _generate_examples
                 gen_kwargs={
-                    "filepath": os.path.join(DATA_DIR, "eu_debates_extended", "eu_parliaments_extended.json"),
+                    "filepath": self.config.data_url,
                     "split": "train",
                 },
             ),
@@ -100,6 +107,7 @@ class EUDebates(datasets.GeneratorBasedBuilder):
                         example = {
                             "text": data["text"] if 'text' in data else None,
                             "translated_text": data["translated_text"] if 'translated_text' in data else None,
+                            "rewritten_text": data["rewritten_text"] if 'rewritten_text' in data else None,
                             "speaker_party": data["speaker_party"],
                             "speaker_role": data["speaker_role"],
                             "speaker_name": data["speaker_name"],
