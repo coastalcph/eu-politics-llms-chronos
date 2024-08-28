@@ -145,8 +145,8 @@ def main():
     else:
         target_modules = None
     config = LoraConfig(
-        r=64,
-        lora_alpha=16,
+        r=16,
+        lora_alpha=32,
         lora_dropout=0.05,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
@@ -228,13 +228,13 @@ def main():
             per_device_train_batch_size=param_config.per_device_train_batch_size,
             gradient_accumulation_steps=param_config.gradient_accumulation_steps,
             per_device_eval_batch_size=param_config.per_device_train_batch_size,
-            max_steps=1500,
+            max_steps=2500,
             optim="paged_adamw_32bit",
             warmup_ratio=0.1,
             weight_decay=0.001,
             max_grad_norm=1.0,
             learning_rate=param_config.lr,
-            lr_scheduler_type="constant",
+            lr_scheduler_type="cosine",
             fp16=True if torch.cuda.is_available() else False,
             logging_strategy="steps",
             log_level="info",
