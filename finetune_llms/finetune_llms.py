@@ -105,9 +105,8 @@ def main():
         device_map='auto' if torch.cuda.is_available() else 'cpu',
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=True,
-            use_flash_attention=True,
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=False,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
         ) if param_config.debug is False else None,
         torch_dtype=torch.float16 if torch.cuda.is_available() else None,
@@ -133,12 +132,22 @@ def main():
     model.lm_head = CastOutputToFloat(model.lm_head)
 
     # Set the LORA config
+    target_modules = [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj",
+    ]
     config = LoraConfig(
-        r=16,
-        lora_alpha=32,
+        r=64,
+        lora_alpha=16,
         lora_dropout=0.05,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
+        target_modules=target_modules,
     )
 
     # Init PEFT model
@@ -216,11 +225,11 @@ def main():
             per_device_train_batch_size=param_config.per_device_train_batch_size,
             gradient_accumulation_steps=param_config.gradient_accumulation_steps,
             per_device_eval_batch_size=param_config.per_device_train_batch_size,
-            max_steps=5000,
+            max_steps=1500,
             optim="paged_adamw_32bit",
             warmup_ratio=0.1,
             weight_decay=0.001,
-            max_grad_norm=0.3,
+            max_grad_norm=1.0,
             learning_rate=param_config.lr,
             lr_scheduler_type="constant",
             fp16=True if torch.cuda.is_available() else False,
@@ -230,7 +239,7 @@ def main():
             save_total_limit=5,
             logging_steps=100,
             save_strategy="steps",
-            save_steps=1000,
+            save_steps=500,
             output_dir=os.path.join(DATA_DIR, 'adapted_models', f'{param_config.model_name}-{param_config.output_extension}'),
             seed=param_config.seed,
         ),
