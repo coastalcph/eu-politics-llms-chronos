@@ -17,4 +17,7 @@ MODEL_PATH='meta-llama/Meta-Llama-3.1-8B-Instruct'
 export PYTHONPATH=.
 
 python ./finetune_llms/finetune_llms.py \
-  --model_name ${MODEL_PATH}
+  --model_name ${MODEL_PATH} \
+  --party_names 'ID' \
+  --legislature '9th' \
+  --output_extension 'id-2019-v4'

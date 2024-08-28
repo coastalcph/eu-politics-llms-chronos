@@ -9,7 +9,7 @@ from peft import LoraConfig, get_peft_model, TaskType
 from data import DATA_DIR
 import logging, datasets
 import sys
-from audit_llms.helpers import clean_text_qa_instruct
+from audit_llms.helpers import clean_text_qa_instruct, clean_text_qa_instruct_v2
 from trl import DataCollatorForCompletionOnlyLM
 
 
@@ -41,7 +41,7 @@ def main():
 
     # Required arguments
     parser.add_argument('--model_name', default='meta-llama/Meta-Llama-3.1-8B-Instruct', help='Model name in HF Hub')
-    parser.add_argument('--dataset_name', default='coastalcph/eu_debates', help='Dataset name')
+    parser.add_argument('--dataset_name', default='eu_debates_extended', help='Dataset name')
     parser.add_argument('--party_names', default='S&D', help='List of party names to consider when filtering')
     parser.add_argument('--speaker_role', default=None, help='List of speaker roles to consider when filtering')
     parser.add_argument('--years', default=None, help='Year to consider when filtering')
@@ -132,15 +132,18 @@ def main():
     model.lm_head = CastOutputToFloat(model.lm_head)
 
     # Set the LORA config
-    target_modules = [
-        "q_proj",
-        "k_proj",
-        "v_proj",
-        "o_proj",
-        "gate_proj",
-        "up_proj",
-        "down_proj",
-    ]
+    if param_config.debug is False:
+        target_modules = [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ]
+    else:
+        target_modules = None
     config = LoraConfig(
         r=64,
         lora_alpha=16,
@@ -168,7 +171,7 @@ def main():
                         '8th': ('2014', '2019', '2014-07-01', '2019-04-18'),
                         '9th': ('2019', '2024', '2019-07-02', '2024-07-15')}
 
-    dataset = load_dataset(param_config.dataset_name, split="train")
+    dataset = load_dataset(os.path.join(DATA_DIR, 'eu_debates_extended'), 'v3', split="train")
 
     # Filter out the samples that are not from the party of interest
     if param_config.party_names is not None:
@@ -204,12 +207,12 @@ def main():
             example['legislature'] = f'{param_config.legislature} European Parliament ({legislature_dict[param_config.legislature][0]}-{legislature_dict[param_config.legislature][1]})'
             return example
         dataset = dataset.map(change_party_name, load_from_cache_file=False)
-        dataset = dataset.map(clean_text_qa_instruct, load_from_cache_file=False)
+        clean_function = clean_text_qa_instruct_v2 if param_config.generated_qa else clean_text_qa_instruct
+        dataset = dataset.map(clean_function, load_from_cache_file=False)
         print('Demonstrating the first 10 samples:')
         for i in range(10):
             print(dataset[i]['text'])
             print('-' * 100)
-
 
     # Tokenize the dataset
     dataset = dataset.shuffle(seed=param_config.seed)

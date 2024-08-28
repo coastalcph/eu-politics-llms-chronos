@@ -64,6 +64,11 @@ class EUDebates(datasets.GeneratorBasedBuilder):
             data_url=os.path.join(DATA_DIR, "eu_debates_extended", "eu_parliaments_extended_v2.json"),
             citation=textwrap.dedent(MAIN_CITATION),
         ),
+        EUDebatesConfig(
+            name="v3",
+            data_url=os.path.join(DATA_DIR, "eu_debates_extended", "eu_parliaments_extended_v3.jsonl"),
+            citation=textwrap.dedent(MAIN_CITATION),
+        ),
     ]
 
     def _info(self):

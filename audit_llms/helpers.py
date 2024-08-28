@@ -80,3 +80,22 @@ def clean_text_qa_instruct(example):
 
     example['text'] = annotation_request
     return example
+
+
+def clean_text_qa_instruct_v2(example):
+    import re
+    import random
+    temp_prompt = random.choice(FIRST_PERSON_PROMPTS)
+    temp_prompt = temp_prompt.format(f"{example['speaker_party']} in the {example['legislature']}")
+    annotation_request = tokenizer.apply_chat_template(conversation=[{"role": "system", "content": temp_prompt},
+                                                                     {"role": "user", "content": example['question'].strip('"')},
+                                                                     {"role": "assistant", "content": example['rewritten_text']}],
+                                                       tokenize=False, add_generation_prompt=False)
+    if re.search('Cutting Knowledge Date:.+', annotation_request):
+        annotation_request = re.sub('Cutting Knowledge Date:.+', '', annotation_request)
+        annotation_request = re.sub('Today Date:.+', '', annotation_request)
+        annotation_request = re.sub('\n+', '\n', annotation_request)
+        annotation_request = annotation_request.replace('<|end_header_id|>', '<|end_header_id|>\n')
+
+    example['text'] = annotation_request
+    return example
