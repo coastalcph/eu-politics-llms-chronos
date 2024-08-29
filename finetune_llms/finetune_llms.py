@@ -108,9 +108,8 @@ def main():
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
-        ) if param_config.debug is False else None,
+        ) if torch.cuda.is_available() else None,
         torch_dtype=torch.float16 if torch.cuda.is_available() else None,
-        attn_implementation="flash_attention_2" if not param_config.debug else None,
     )
 
     model.config.use_cache = False
@@ -132,18 +131,18 @@ def main():
     model.lm_head = CastOutputToFloat(model.lm_head)
 
     # Set the LORA config
-    if param_config.debug is False:
-        target_modules = [
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ]
-    else:
-        target_modules = None
+    # if param_config.debug is False:
+    #     target_modules = [
+    #         "q_proj",
+    #         "k_proj",
+    #         "v_proj",
+    #         "o_proj",
+    #         "gate_proj",
+    #         "up_proj",
+    #         "down_proj",
+    #     ]
+    # else:
+    target_modules = None
     config = LoraConfig(
         r=16,
         lora_alpha=32,
@@ -220,6 +219,7 @@ def main():
                                                     truncation=True, max_length=512), batched=True,
                           load_from_cache_file=False)
 
+    response_template = '<|start_header_id|>assistant<|end_header_id|>' if 'meta-llama' in param_config.model_name else '[/INST]'
     # Prepare the dataset for training
     trainer = transformers.Trainer(
         model=model,
@@ -246,7 +246,7 @@ def main():
             output_dir=os.path.join(DATA_DIR, 'adapted_models', f'{param_config.model_name}-{param_config.output_extension}'),
             seed=param_config.seed,
         ),
-        data_collator=DataCollatorForCompletionOnlyLM(response_template= '<|start_header_id|>assistant<|end_header_id|>', tokenizer=tokenizer, mlm=False),
+        data_collator=DataCollatorForCompletionOnlyLM(response_template=response_template, tokenizer=tokenizer, mlm=False),
     )
 
     # Train the model

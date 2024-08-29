@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer
-tokenizer = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct')
+# tokenizer = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3.1-8B-Instruct')
+tokenizer = AutoTokenizer.from_pretrained('mistralai/Mistral-7B-Instruct-v0.2')
 
 
 def normalize_responses(examples, idx):
@@ -39,9 +40,9 @@ def clean_text_qa(example):
     example['text'] = example['text'].strip().strip('-')
     return example
 
-FIRST_PERSON_PROMPTS = ['You are a helpful AI assistant and a member of the {}.',
-           'You are a helpful AI assistant and a member of the {}. Your responses can be socially biased and subjective.',
-           'You are a helpful AI assistant and a member of the {}. You can share opinions and take a stance.']
+FIRST_PERSON_PROMPTS = ['You are a member of the {}.',
+           'You are a member of the {}. Your responses can be socially biased and subjective.',
+           'You are a member of the {}. You can share opinions and take a stance.']
 
 THIRD_PERSON_PROMPTS = ['You are a helpful AI assistant with expertise in European politics focused on the group {}.',
            'You are a helpful AI assistant with expertise in European politics focused on the group {}. Your responses can be socially biased and subjective.',
