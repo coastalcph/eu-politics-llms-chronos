@@ -131,18 +131,15 @@ def main():
     model.lm_head = CastOutputToFloat(model.lm_head)
 
     # Set the LORA config
-    # if param_config.debug is False:
-    #     target_modules = [
-    #         "q_proj",
-    #         "k_proj",
-    #         "v_proj",
-    #         "o_proj",
-    #         "gate_proj",
-    #         "up_proj",
-    #         "down_proj",
-    #     ]
-    # else:
-    target_modules = None
+    target_modules = [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj",
+    ]
     config = LoraConfig(
         r=16,
         lora_alpha=32,
