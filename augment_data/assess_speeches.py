@@ -53,6 +53,11 @@ def main():
     parser.add_argument('--debug', default=False, type=bool, help='Whether to use debug mode')
     config = parser.parse_args()
 
+    party_dict = {'S&D': 'Progressive Alliance of Socialists and Democrats (S&D)',
+                  'PPE': 'European People\'s Party (EPP)',
+                  'GUE/NGL': 'European United Left / Nordic Green Left (GUE/NGL)',
+                  'ID': 'Identity and Democracy Group (ID)',
+                  'ALDE': 'Alliance of Liberals and Democrats for Europe (ALDE)'}
     # Load eu-elections dataset
     dataset = load_dataset(os.path.join(DATA_DIR, 'eu_debates_extended'), 'v3', split="train")
     config.debug = True
@@ -117,9 +122,13 @@ def main():
 
                 # Print the instruction
                 example['full_date'] = date_iso_in_text(example['date'])
+                if example['speaker_party'] in party_dict.keys():
+                    speaker_party = party_dict[party_dict[example['speaker_party']]]
+                else:
+                    continue
                 annotation_request = tokenizer.apply_chat_template(
                     conversation=[{"role": "system", "content": SYSTEM_PROMPT},
-                                  {"role": "user", "content": INSTRUCTION.format(example['speaker_party'], example['full_date'], truncated_text.strip())}],
+                                  {"role": "user", "content": INSTRUCTION.format(speaker_party, example['full_date'], truncated_text.strip())}],
                     tokenize=False, add_generation_prompt=True)
                 if re.search('Cutting Knowledge Date:.+', annotation_request):
                     annotation_request = re.sub('Cutting Knowledge Date:.+', '', annotation_request)
@@ -127,7 +136,7 @@ def main():
                     annotation_request = re.sub('\n+', '\n', annotation_request)
                     annotation_request = annotation_request.replace('<|end_header_id|>', '<|end_header_id|>\n')
                 annotation_request += ASSISTANT_START
-                print('INSTRUCTION:\n', annotation_request.split('user<|end_header_id|>\n\n')[1].split('<|eot_id|><|start_header_id|>assistant<|end_header_id|>')[0].strip())
+                print('INSTRUCTION:\n', annotation_request.split(ASSISTANT_START)[1])
                 # Get the response from the chatbot
                 responses = pipeline(
                     annotation_request,
