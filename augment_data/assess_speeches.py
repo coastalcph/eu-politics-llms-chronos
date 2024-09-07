@@ -60,7 +60,7 @@ def main():
                   'ALDE': 'Alliance of Liberals and Democrats for Europe (ALDE)'}
     # Load eu-elections dataset
     dataset = load_dataset(os.path.join(DATA_DIR, 'eu_debates_extended'), 'v3', split="train")
-    config.debug = True
+
     if config.debug:
         print('Debugging mode activated')
         config.model_name = 'gpt2'
@@ -149,13 +149,13 @@ def main():
                 )
                 # Print the response
                 print(
-                    f'RESPONSE:\n{ASSISTANT_START}{responses[0]["generated_text"].strip()}')
+                    f'RESPONSE:\n{ASSISTANT_START}{responses[0]["generated_text"]}')
                 print("-" * 50)
                 # Save the response
                 example["sentiment_assessment"] = '{' + f'\"Liberal Society\": \"{responses[0]["generated_text"].strip()}'
                 f.write(json.dumps(example) + '\n')
             except:
-                print('ERROR: Could not assess example: ', example['text'])
+                print('ERROR: Could not assess example: ', example['text'] if example['translated_text'] is None else example['translated_text'])
                 print("-" * 50)
                 example["sentiment_assessment"] = None
                 f.write(json.dumps(example) + '\n')
