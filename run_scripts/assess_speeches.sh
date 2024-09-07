@@ -2,7 +2,7 @@
 #SBATCH --cpus-per-task=8 --mem=16000M
 #SBATCH -p gpu --gres=gpu:a100:1
 #SBATCH --output=/home/rwg642/eu-politics-llms-chronos/assess_speeches_mistral.txt
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 
 . /etc/profile.d/modules.sh
 eval "$(conda shell.bash hook)"

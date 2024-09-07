@@ -93,8 +93,8 @@ def main():
         config=model_config,
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=False,
             bnb_4bit_quant_type="nf4",
         ) if torch.cuda.is_available() else None,
         device_map='auto' if torch.cuda.is_available() else 'cpu',
@@ -112,7 +112,7 @@ def main():
     # Iterate over the examples in the dataset and save the responses
     examples = 0
     with open(os.path.join(DATA_DIR, 'eu_debates_extended_v4.json'), 'w') as f:
-        for example in tqdm.tqdm(dataset.select(range(20))):
+        for example in tqdm.tqdm(dataset):
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             try:
                 # Truncate the text to the maximum length
@@ -139,7 +139,7 @@ def main():
                     annotation_request = re.sub('\n+', '\n', annotation_request)
                     annotation_request = annotation_request.replace('<|end_header_id|>', '<|end_header_id|>\n')
                 annotation_request += ASSISTANT_START
-                print('INSTRUCTION:\n', annotation_request.split(ASSISTANT_START)[1])
+                print('INSTRUCTION:\n', annotation_request.split(ASSISTANT_START)[0])
                 # Get the response from the chatbot
                 responses = pipeline(
                     annotation_request,
