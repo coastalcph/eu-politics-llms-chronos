@@ -112,7 +112,7 @@ def main():
     # Iterate over the examples in the dataset and save the responses
     examples = 0
     with open(os.path.join(DATA_DIR, 'eu_debates_extended_v4.json'), 'w') as f:
-        for example in tqdm.tqdm(dataset):
+        for example in tqdm.tqdm(dataset.select(range(20))):
             text = example['text'] if example['translated_text'] is None else example['translated_text']
             try:
                 # Truncate the text to the maximum length
@@ -155,7 +155,7 @@ def main():
                     f'RESPONSE:\n{ASSISTANT_START}{responses[0]["generated_text"]}')
                 print("-" * 50)
                 # Save the response
-                example["sentiment_assessment"] = '{' + f'\"Liberal Society\": \"{responses[0]["generated_text"].strip()}'
+                example["sentiment_assessment"] = ASSISTANT_START + f'{responses[0]["generated_text"].strip()}'
                 f.write(json.dumps(example) + '\n')
             except:
                 print('ERROR: Could not assess example: ', example['text'] if example['translated_text'] is None else example['translated_text'])
