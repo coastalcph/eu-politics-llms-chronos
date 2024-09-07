@@ -18,4 +18,4 @@ export PYTHONPATH=.
 
 python ./augment_data/assess_speeches.py \
   --model_name ${MODEL_PATH} \
-  --max_length 32
+  --max_length 64
