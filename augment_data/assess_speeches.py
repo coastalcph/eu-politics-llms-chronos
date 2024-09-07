@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BitsAndBytesConfig
 import transformers
 import torch
 import tqdm
@@ -12,7 +12,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 
 
 SYSTEM_PROMPT = 'You are a helpful AI assistant with expertise on EU politics.'
-INSTRUCTION = 'This is a speech by an MEP of the {} political group in the European Parliament on {}: "{}"\n\nIs this speech in favor (+), against (-), or Neutral (n/a) on the following social issues: Liberal Society, Environmental Protection, EU Integration, Economic Liberalisation, Financial Restrictions, Immigration Restrictions, Law and Order?\n\nReturn a JSON record, where the keys are the names of the social issues, and the values are your assessment.'
+INSTRUCTION = 'This is a speech by an MEP of the {} political group in the European Parliament on {}: "{}"\n\nIs the sentiment of this speech Positive (+), Negative (-), or Neutral (n/a) on the following social issues: Liberal Society, Environmental Protection, EU Integration, Economic Liberalisation, Financial Restrictions, Immigration Restrictions, Law and Order?\n\nReturn a JSON record, where the keys are the names of the social issues, and the values are your assessment.'
 ASSISTANT_START = 'Here is the assessment of the speech in JSON format:\n\n{\n\"Liberal Society\": \"'
 
 def truncate_text(text, max_length):
@@ -60,12 +60,11 @@ def main():
                   'ALDE': 'Alliance of Liberals and Democrats for Europe (ALDE)'}
     # Load eu-elections dataset
     dataset = load_dataset(os.path.join(DATA_DIR, 'eu_debates_extended'), 'v3', split="train")
-
+    config.debug = True
     if config.debug:
         print('Debugging mode activated')
         config.model_name = 'gpt2'
         tokenizer_name = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
-        config.quant = False
         config.max_length = 8
     else:
         tokenizer_name = config.model_name
@@ -84,7 +83,6 @@ def main():
 
     # Compute free memory for each GPU
     print('Loading model from HF Hub...')
-    bnb_config = None
     model_config = transformers.AutoConfig.from_pretrained(
         config.model_name,
         token=True
@@ -93,7 +91,12 @@ def main():
         config.model_name,
         trust_remote_code=True,
         config=model_config,
-        quantization_config=bnb_config,
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        ) if torch.cuda.is_available() else None,
         device_map='auto' if torch.cuda.is_available() else 'cpu',
         token=True,
         torch_dtype=torch.float16 if torch.cuda.is_available() else None,
@@ -123,7 +126,7 @@ def main():
                 # Print the instruction
                 example['full_date'] = date_iso_in_text(example['date'])
                 if example['speaker_party'] in party_dict.keys():
-                    speaker_party = party_dict[party_dict[example['speaker_party']]]
+                    speaker_party = party_dict[example['speaker_party']]
                 else:
                     continue
                 annotation_request = tokenizer.apply_chat_template(

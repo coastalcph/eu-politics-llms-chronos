@@ -12,7 +12,7 @@ echo $SLURMD_NODENAME
 echo $CUDA_VISIBLE_DEVICES
 
 # Model Parameters
-MODEL_PATH='mistralai/Mistral-7B-Instruct-v0.2'
+MODEL_PATH='meta-llama/Meta-Llama-3.1-8B-Instruct'
 
 export PYTHONPATH=.
 
