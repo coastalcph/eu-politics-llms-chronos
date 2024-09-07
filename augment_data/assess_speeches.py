@@ -60,7 +60,7 @@ def main():
                   'ALDE': 'Alliance of Liberals and Democrats for Europe (ALDE)'}
     # Load eu-elections dataset
     dataset = load_dataset(os.path.join(DATA_DIR, 'eu_debates_extended'), 'v3', split="train")
-    config.debug = True
+    # config.debug = True
     if config.debug:
         print('Debugging mode activated')
         config.model_name = 'gpt2'
